@@ -1,0 +1,31 @@
+@page "/login"
+@inject AuthService Auth
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Login</PageTitle>
+<div class="card login">
+    <h1>Inventory Management</h1>
+    <FormField Label="Email"><input type="email" @bind="email" /></FormField>
+    <FormField Label="Password"><input type="password" @bind="password" @onkeyup="OnKey" /></FormField>
+    @if (error != "") { <p class="error" role="alert">@error</p> }
+    <button class="btn" disabled="@busy" @onclick="LoginAsync">Log in</button>
+    <p class="muted"><small>Demo: admin@demo.com / Admin123!, manager@demo.com / Manager123!, operator@demo.com / Operator123!</small></p>
+</div>
+
+@code {
+    string? email, password;
+    string error = "";
+    bool busy;
+
+    async Task OnKey(KeyboardEventArgs e) { if (e.Key == "Enter") await LoginAsync(); }
+
+    async Task LoginAsync()
+    {
+        busy = true; error = "";
+        var result = await Auth.LoginAsync(email, password);
+        if (result.IsOk) { Session.Login(result.Unwrap()); Nav.NavigateTo(""); }
+        else error = result.Message;
+        busy = false;
+    }
+}

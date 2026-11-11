@@ -1,0 +1,41 @@
+@page "/transactions"
+@inject InventoryService Inventory
+
+<PageTitle>History</PageTitle>
+<RoleGuard>
+    <h1>Transaction history</h1>
+    <div class="toolbar">
+        <select aria-label="Type filter" @bind="filter" @bind:after="FilterAsync">
+            <option value="">All types</option>
+            @foreach (var t in Enum.GetValues<TxType>()) { <option value="@t">@t</option> }
+        </select>
+    </div>
+    <DataTable Items="items">
+        <HeaderTemplate><th>When (UTC)</th><th>Type</th><th>SKU</th><th>Qty</th><th>From</th><th>To</th><th>User</th><th>Reason</th></HeaderTemplate>
+        <RowTemplate Context="t">
+            <td data-label="When">@t.When.ToString("yyyy-MM-dd HH:mm")</td><td data-label="Type">@t.Type</td>
+            <td data-label="SKU">@t.Sku</td><td data-label="Qty">@t.Quantity</td>
+            <td data-label="From">@t.From</td><td data-label="To">@t.To</td>
+            <td data-label="User">@t.User</td><td data-label="Reason">@t.Reason</td>
+        </RowTemplate>
+        <EmptyTemplate><p class="muted">No transactions yet.</p></EmptyTemplate>
+    </DataTable>
+    <Pagination Page="page" PageSize="PageSize" TotalCount="total" PageChanged="GoToAsync" />
+</RoleGuard>
+
+@code {
+    const int PageSize = 15;
+    List<TxRow> items = new();
+    int page = 1, total;
+    string filter = "";
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    async Task LoadAsync()
+    {
+        TxType? type = Enum.TryParse<TxType>(filter, out var t) ? t : null;
+        (items, total) = await Inventory.ListTransactionsAsync(type, page, PageSize);
+    }
+    async Task FilterAsync() { page = 1; await LoadAsync(); }
+    async Task GoToAsync(int p) { page = p; await LoadAsync(); }
+}

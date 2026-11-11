@@ -1,0 +1,25 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject SessionState Session
+
+<div class="app">
+    @if (Session.Current is not null)
+    {
+        <NavMenu />
+    }
+    <main>
+        <ToastHost />
+        <ErrorBoundary>
+            <ChildContent>@Body</ChildContent>
+            <ErrorContent>
+                <p class="error">Something went wrong. Please reload the page.</p>
+            </ErrorContent>
+        </ErrorBoundary>
+    </main>
+</div>
+
+@code {
+    void Changed() => InvokeAsync(StateHasChanged);
+    protected override void OnInitialized() => Session.OnChange += Changed;
+    public void Dispose() => Session.OnChange -= Changed;
+}
