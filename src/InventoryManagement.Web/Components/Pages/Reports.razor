@@ -1,0 +1,46 @@
+@page "/reports"
+@inject ReportService ReportsService
+@inject BinService BinsService
+@inject SessionState Session
+
+<PageTitle>Reports</PageTitle>
+<RoleGuard Roles="new[] { Role.Manager, Role.Administrator }">
+    <h1>Reports</h1>
+
+    <h2>Low stock</h2>
+    <DataTable Items="low">
+        <HeaderTemplate><th>SKU</th><th>Name</th><th>In stock</th><th>Minimum</th></HeaderTemplate>
+        <RowTemplate Context="p"><td data-label="SKU">@p.Sku</td><td data-label="Name">@p.Name</td><td data-label="In stock">@p.Qty</td><td data-label="Minimum">@p.Min</td></RowTemplate>
+        <EmptyTemplate><p class="muted">Nothing is below minimum.</p></EmptyTemplate>
+    </DataTable>
+
+    <h2>Bin fill</h2>
+    <DataTable Items="bins">
+        <HeaderTemplate><th>Bin</th><th>Used</th><th>Fill</th></HeaderTemplate>
+        <RowTemplate Context="b"><td data-label="Bin">@b.Code</td><td data-label="Used">@b.Occupied / @b.Capacity</td><td data-label="Fill">@b.Percent%</td></RowTemplate>
+    </DataTable>
+
+    <h2>Movements, last 30 days</h2>
+    <DataTable Items="moves">
+        <HeaderTemplate><th>Day</th><th>Type</th><th>Units</th></HeaderTemplate>
+        <RowTemplate Context="m"><td data-label="Day">@m.Day</td><td data-label="Type">@m.Type</td><td data-label="Units">@m.Total</td></RowTemplate>
+        <EmptyTemplate><p class="muted">No movements yet.</p></EmptyTemplate>
+    </DataTable>
+</RoleGuard>
+
+@code {
+    List<ProductStock> low = new();
+    List<BinView> bins = new();
+    List<MovementRow> moves = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = Session.Current;
+        if (user is null || !Permissions.CanSeeReports(user.Role)) return;
+        var l = await ReportsService.LowStockAsync(user);
+        var m = await ReportsService.MovementsAsync(user);
+        if (l.IsOk) low = l.Unwrap();
+        if (m.IsOk) moves = m.Unwrap();
+        bins = await BinsService.ListAsync();
+    }
+}

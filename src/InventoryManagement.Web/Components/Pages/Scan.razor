@@ -1,0 +1,36 @@
+@page "/scan"
+@inject InventoryService Inventory
+
+<PageTitle>Scan</PageTitle>
+<RoleGuard>
+    <h1>Scan barcode</h1>
+    <div class="toolbar">
+        <input aria-label="Barcode" placeholder="Type or scan a barcode and press Enter" @bind="barcode" @onkeyup="OnKey" />
+        <button class="btn" @onclick="ScanAsync">Find</button>
+    </div>
+    @if (error != "") { <p class="error">@error</p> }
+    @if (result is not null)
+    {
+        <div class="card">
+            <h2>@result.Name <small class="muted">(@result.Sku)</small></h2>
+            <p>Total in stock: <strong>@result.Total</strong></p>
+            @if (result.Locations.Count == 0) { <p class="muted">Not in any bin right now.</p> }
+            <ul>@foreach (var l in result.Locations) { <li>Bin @l.Bin: @l.Quantity pcs</li> }</ul>
+        </div>
+    }
+</RoleGuard>
+
+@code {
+    string? barcode;
+    string error = "";
+    ScanResult? result;
+
+    async Task OnKey(KeyboardEventArgs e) { if (e.Key == "Enter") await ScanAsync(); }
+
+    async Task ScanAsync()
+    {
+        var r = await Inventory.ScanAsync(barcode);
+        error = r.IsOk ? "" : r.Message;
+        result = r.IsOk ? r.Unwrap() : null;
+    }
+}

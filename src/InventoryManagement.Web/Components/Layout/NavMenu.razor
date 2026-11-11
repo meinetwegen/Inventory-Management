@@ -1,0 +1,31 @@
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<nav class="nav" aria-label="Main">
+    <span class="brand">📦 Inventory</span>
+    <div class="links">
+        <NavLink href="" Match="NavLinkMatch.All">Dashboard</NavLink>
+        <NavLink href="stock">Stock</NavLink>
+        <NavLink href="products">Products</NavLink>
+        <NavLink href="bins">Bins</NavLink>
+        <NavLink href="operations">Operations</NavLink>
+        <NavLink href="scan">Scan</NavLink>
+        <NavLink href="transactions">History</NavLink>
+        @if (Permissions.CanSeeReports(Session.Current!.Role))
+        {
+            <NavLink href="reports">Reports</NavLink>
+        }
+    </div>
+    <div class="user">
+        <small>@Session.Current!.Email (@Session.Current.Role)</small>
+        <button class="btn secondary" @onclick="Logout">Log out</button>
+    </div>
+</nav>
+
+@code {
+    void Logout()
+    {
+        Session.Logout();
+        Nav.NavigateTo("login");
+    }
+}

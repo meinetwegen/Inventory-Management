@@ -1,0 +1,25 @@
+@inject SessionState Session
+@inject NavigationManager Nav
+
+@if (Session.Current is null)
+{
+    <p class="muted">Redirecting to login…</p>
+}
+else if (Roles is not null && !Roles.Contains(Session.Current.Role))
+{
+    <p class="error">Access denied for your role.</p>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public Role[]? Roles { get; set; }   // null = any logged-in user
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Session.Current is null) Nav.NavigateTo("login");
+    }
+}

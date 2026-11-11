@@ -1,0 +1,40 @@
+@page "/bins"
+@inject BinService BinsService
+@inject SessionState Session
+@inject ToastService Toast
+
+<PageTitle>Bins</PageTitle>
+<RoleGuard>
+    <h1>Storage bins</h1>
+    @if (Permissions.CanManageCatalog(Session.Current!.Role))
+    {
+        <div class="card form">
+            <FormField Label="Code"><input @bind="code" placeholder="A-03" /></FormField>
+            <FormField Label="Capacity"><input type="number" min="1" @bind="capacity" /></FormField>
+            <button class="btn" @onclick="AddAsync">Add bin</button>
+        </div>
+    }
+    <DataTable Items="bins">
+        <HeaderTemplate><th>Code</th><th>Used / Capacity</th><th>Fill</th></HeaderTemplate>
+        <RowTemplate Context="b">
+            <td data-label="Code">@b.Code</td>
+            <td data-label="Used">@b.Occupied / @b.Capacity</td>
+            <td data-label="Fill"><div class="bar"><div class="bar-fill" style="width:@(b.Percent)%"></div></div> @b.Percent%</td>
+        </RowTemplate>
+    </DataTable>
+</RoleGuard>
+
+@code {
+    List<BinView> bins = new();
+    string? code;
+    int capacity = 50;
+
+    protected override async Task OnInitializedAsync() => bins = await BinsService.ListAsync();
+
+    async Task AddAsync()
+    {
+        var r = await BinsService.CreateAsync(Session.Current!, code, capacity);
+        Toast.Show(r.IsOk ? $"Bin {r.Unwrap().Code} added" : r.Message, !r.IsOk);
+        if (r.IsOk) { code = null; bins = await BinsService.ListAsync(); }
+    }
+}
