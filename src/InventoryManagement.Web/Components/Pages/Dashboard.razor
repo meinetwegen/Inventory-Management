@@ -1,0 +1,40 @@
+@page "/"
+@implements IDisposable
+@inject InventoryState State
+
+<PageTitle>Dashboard</PageTitle>
+<RoleGuard>
+    <h1>Dashboard</h1>
+    @if (State.Current is null)
+    {
+        <p class="muted">Loading…</p>
+    }
+    else
+    {
+        <div class="grid">
+            <StatCard Title="Products" Value="@State.Current.Products.ToString()" />
+            <StatCard Title="Units in stock" Value="@State.Current.Units.ToString()" />
+            <StatCard Title="Bins in use" Value="@BinsText" />
+            <StatCard Title="Low stock" Value="@State.Current.LowStockCount.ToString()" />
+        </div>
+        <h2>Low stock (top 5)</h2>
+        <DataTable Items="State.LowStock">
+            <HeaderTemplate><th>SKU</th><th>Name</th><th>In stock</th><th>Minimum</th></HeaderTemplate>
+            <RowTemplate Context="p"><td data-label="SKU">@p.Sku</td><td data-label="Name">@p.Name</td><td data-label="In stock">@p.Qty</td><td data-label="Minimum">@p.Min</td></RowTemplate>
+            <EmptyTemplate><p class="muted">Everything is above minimum level 👍</p></EmptyTemplate>
+        </DataTable>
+    }
+</RoleGuard>
+
+@code {
+    string BinsText => State.Current is null ? "" : State.Current.BinsUsed + " / " + State.Current.BinCount;
+    void Changed() => InvokeAsync(StateHasChanged);
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.OnChange += Changed;
+        await State.RefreshAsync();
+    }
+
+    public void Dispose() => State.OnChange -= Changed;
+}
