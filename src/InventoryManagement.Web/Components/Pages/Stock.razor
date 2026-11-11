@@ -1,0 +1,23 @@
+@page "/stock"
+@inject InventoryService Inventory
+
+<PageTitle>Stock</PageTitle>
+<RoleGuard>
+    <h1>Stock by bin</h1>
+    <DataTable Items="items">
+        <HeaderTemplate><th>Bin</th><th>SKU</th><th>Product</th><th>Quantity</th></HeaderTemplate>
+        <RowTemplate Context="s"><td data-label="Bin">@s.Bin</td><td data-label="SKU">@s.Sku</td><td data-label="Product">@s.Name</td><td data-label="Quantity">@s.Quantity</td></RowTemplate>
+        <EmptyTemplate><p class="muted">Warehouse is empty. Use Operations → Receive.</p></EmptyTemplate>
+    </DataTable>
+    <Pagination Page="page" PageSize="PageSize" TotalCount="total" PageChanged="GoToAsync" />
+</RoleGuard>
+
+@code {
+    const int PageSize = 15;
+    List<StockRow> items = new();
+    int page = 1, total;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+    async Task LoadAsync() => (items, total) = await Inventory.ListStockAsync(page, PageSize);
+    async Task GoToAsync(int p) { page = p; await LoadAsync(); }
+}
