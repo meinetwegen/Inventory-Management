@@ -1,5 +1,5 @@
 @page "/products"
-@inject ProductService Products
+@inject ProductService ProductsService
 @inject SessionState Session
 @inject ToastService Toast
 
@@ -63,7 +63,7 @@
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
-    async Task LoadAsync() => (items, total) = await Products.ListAsync(search, page, PageSize);
+    async Task LoadAsync() => (items, total) = await ProductsService.ListAsync(search, page, PageSize);
     async Task SearchAsync() { page = 1; await LoadAsync(); }
     async Task GoToAsync(int p) { page = p; await LoadAsync(); }
 
@@ -72,7 +72,7 @@
     async Task SaveAsync()
     {
         var e = editing!;
-        var r = await Products.SaveAsync(Session.Current!, e.Id == 0 ? null : e.Id, e.Sku, e.Barcode, e.Name, e.MinStockLevel);
+        var r = await ProductsService.SaveAsync(Session.Current!, e.Id == 0 ? null : e.Id, e.Sku, e.Barcode, e.Name, e.MinStockLevel);
         if (!r.IsOk) { error = r.Message; return; }
         Toast.Show("Product saved");
         editing = null; error = "";
@@ -81,7 +81,7 @@
 
     async Task DisableAsync()
     {
-        var r = await Products.DisableAsync(Session.Current!, toDisable!.Id);
+        var r = await ProductsService.DisableAsync(Session.Current!, toDisable!.Id);
         Toast.Show(r.IsOk ? "Product disabled" : r.Message, !r.IsOk);
         toDisable = null;
         await LoadAsync();
