@@ -1,0 +1,21 @@
+@page "/operations"
+@inject SessionState Session
+
+<PageTitle>Operations</PageTitle>
+<RoleGuard>
+    <h1>Operations</h1>
+    <div class="tabs" role="tablist">
+        @foreach (var m in Enum.GetValues<StockOperationForm.OpMode>())
+        {
+            @if (m != StockOperationForm.OpMode.WriteOff || Permissions.CanWriteOff(Session.Current!.Role))
+            {
+                <button class="tab @(m == mode ? "active" : "")" role="tab" @onclick="() => mode = m">@m</button>
+            }
+        }
+    </div>
+    <StockOperationForm Mode="mode" @key="mode" />
+</RoleGuard>
+
+@code {
+    StockOperationForm.OpMode mode = StockOperationForm.OpMode.Receive;
+}
