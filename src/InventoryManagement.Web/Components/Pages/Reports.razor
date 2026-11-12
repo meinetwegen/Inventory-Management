@@ -1,46 +1,77 @@
 @page "/reports"
 @inject ReportService ReportsService
 @inject BinService BinsService
-@inject SessionState Session
+@inject IJSRuntime JS
+@inject ToastService Toast
 
 <PageTitle>Reports</PageTitle>
 <RoleGuard Roles="new[] { Role.Manager, Role.Administrator }">
     <h1>Reports</h1>
+    <p class="muted">Click + to open a report. CSV files contain the whole report, not only the visible page.</p>
 
-    <h2>Low stock</h2>
-    <DataTable Items="low">
-        <HeaderTemplate><th>SKU</th><th>Name</th><th>In stock</th><th>Minimum</th></HeaderTemplate>
-        <RowTemplate Context="p"><td data-label="SKU">@p.Sku</td><td data-label="Name">@p.Name</td><td data-label="In stock">@p.Qty</td><td data-label="Minimum">@p.Min</td></RowTemplate>
-        <EmptyTemplate><p class="muted">Nothing is below minimum.</p></EmptyTemplate>
-    </DataTable>
+    <CollapsibleSection Title="@LowTitle" @bind-Expanded="openLow">
+        <div class="toolbar"><button class="btn secondary" @onclick="DownloadLowAsync">⬇ Download CSV</button></div>
+        <DataTable Items="LowPage">
+            <HeaderTemplate><th>SKU</th><th>Name</th><th>In stock</th><th>Minimum</th></HeaderTemplate>
+            <RowTemplate Context="p"><td data-label="SKU">@p.Sku</td><td data-label="Name">@p.Name</td><td data-label="In stock">@p.Qty</td><td data-label="Minimum">@p.Min</td></RowTemplate>
+            <EmptyTemplate><p class="muted">Nothing is below minimum.</p></EmptyTemplate>
+        </DataTable>
+        <Pagination Page="lowPage" PageSize="PageSize" TotalCount="low.Count" PageChanged="LowPageChanged" />
+    </CollapsibleSection>
 
-    <h2>Bin fill</h2>
-    <DataTable Items="bins">
-        <HeaderTemplate><th>Bin</th><th>Used</th><th>Fill</th></HeaderTemplate>
-        <RowTemplate Context="b"><td data-label="Bin">@b.Code</td><td data-label="Used">@b.Occupied / @b.Capacity</td><td data-label="Fill">@b.Percent%</td></RowTemplate>
-    </DataTable>
+    <CollapsibleSection Title="Bin fill" @bind-Expanded="openBins">
+        <div class="toolbar"><button class="btn secondary" @onclick="DownloadBinsAsync">⬇ Download CSV</button></div>
+        <DataTable Items="bins">
+            <HeaderTemplate><th>Bin</th><th>Used</th><th>Fill</th></HeaderTemplate>
+            <RowTemplate Context="b"><td data-label="Bin">@b.Code</td><td data-label="Used">@b.Occupied / @b.Capacity</td><td data-label="Fill">@b.Percent%</td></RowTemplate>
+        </DataTable>
+    </CollapsibleSection>
 
-    <h2>Movements, last 30 days</h2>
-    <DataTable Items="moves">
-        <HeaderTemplate><th>Day</th><th>Type</th><th>Units</th></HeaderTemplate>
-        <RowTemplate Context="m"><td data-label="Day">@m.Day</td><td data-label="Type">@m.Type</td><td data-label="Units">@m.Total</td></RowTemplate>
-        <EmptyTemplate><p class="muted">No movements yet.</p></EmptyTemplate>
-    </DataTable>
+    <CollapsibleSection Title="Movements, last 30 days" @bind-Expanded="openMoves">
+        <div class="toolbar"><button class="btn secondary" @onclick="DownloadMovesAsync">⬇ Download CSV</button></div>
+        <DataTable Items="MovesPage">
+            <HeaderTemplate><th>Day</th><th>Type</th><th>Units</th></HeaderTemplate>
+            <RowTemplate Context="m"><td data-label="Day">@m.Day</td><td data-label="Type">@m.Type</td><td data-label="Units">@m.Total</td></RowTemplate>
+            <EmptyTemplate><p class="muted">No movements yet.</p></EmptyTemplate>
+        </DataTable>
+        <Pagination Page="movePage" PageSize="PageSize" TotalCount="moves.Count" PageChanged="MovePageChanged" />
+    </CollapsibleSection>
 </RoleGuard>
 
 @code {
+    [CascadingParameter(Name = "CurrentUser")] public SessionUser? User { get; set; }
+
+    const int PageSize = 10;
     List<ProductStock> low = new();
     List<BinView> bins = new();
     List<MovementRow> moves = new();
+    int lowPage = 1, movePage = 1;
+    bool openLow = true, openBins, openMoves;
+
+    string LowTitle => "Low stock (" + low.Count + ")";
+    IEnumerable<ProductStock> LowPage => low.Skip((lowPage - 1) * PageSize).Take(PageSize);
+    IEnumerable<MovementRow> MovesPage => moves.Skip((movePage - 1) * PageSize).Take(PageSize);
+
+    void LowPageChanged(int p) => lowPage = p;
+    void MovePageChanged(int p) => movePage = p;
 
     protected override async Task OnInitializedAsync()
     {
-        var user = Session.Current;
-        if (user is null || !Permissions.CanSeeReports(user.Role)) return;
-        var l = await ReportsService.LowStockAsync(user);
-        var m = await ReportsService.MovementsAsync(user);
+        if (User is null || !Permissions.CanSeeReports(User.Role)) return;
+        var l = await ReportsService.LowStockAsync(User);
+        var m = await ReportsService.MovementsAsync(User);
         if (l.IsOk) low = l.Unwrap();
         if (m.IsOk) moves = m.Unwrap();
         bins = await BinsService.ListAsync();
     }
+
+    async Task DownloadAsync(string name, string csv)
+    {
+        await JS.InvokeVoidAsync("downloadFile", $"{name}-{DateTime.UtcNow:yyyy-MM-dd}.csv", csv);
+        Toast.Show($"{name} report downloaded");
+    }
+
+    Task DownloadLowAsync() => DownloadAsync("low-stock", CsvExport.LowStock(low));
+    Task DownloadBinsAsync() => DownloadAsync("bin-fill", CsvExport.BinFill(bins.Select(b => new BinFillRow(b.Code, b.Occupied, b.Capacity))));
+    Task DownloadMovesAsync() => DownloadAsync("movements", CsvExport.Movements(moves));
 }
