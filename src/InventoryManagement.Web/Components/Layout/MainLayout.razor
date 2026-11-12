@@ -9,12 +9,14 @@
     }
     <main>
         <ToastHost />
-        <ErrorBoundary>
-            <ChildContent>@Body</ChildContent>
-            <ErrorContent>
-                <p class="error">Something went wrong. Please reload the page.</p>
-            </ErrorContent>
-        </ErrorBoundary>
+        <CascadingValue Value="Session.Current" Name="CurrentUser">
+            <ErrorBoundary>
+                <ChildContent>@Body</ChildContent>
+                <ErrorContent>
+                    <p class="error">Something went wrong. Please reload the page.</p>
+                </ErrorContent>
+            </ErrorBoundary>
+        </CascadingValue>
     </main>
 </div>
 

@@ -1,0 +1,15 @@
+<div class="tabs" role="tablist">
+    @foreach (var m in Enum.GetValues<StockOperationForm.OpMode>())
+    {
+        @if (m != StockOperationForm.OpMode.WriteOff || (User is not null && Permissions.CanWriteOff(User.Role)))
+        {
+            <button class="tab @(m == mode ? "active" : "")" role="tab" @onclick="() => mode = m">@m</button>
+        }
+    }
+</div>
+<StockOperationForm Mode="mode" @key="mode" />
+
+@code {
+    [CascadingParameter(Name = "CurrentUser")] public SessionUser? User { get; set; }
+    StockOperationForm.OpMode mode = StockOperationForm.OpMode.Receive;
+}

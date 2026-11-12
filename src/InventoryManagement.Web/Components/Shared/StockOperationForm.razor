@@ -1,6 +1,7 @@
+@implements IDisposable
 @inject InventoryService Inventory
+@inject InventoryState State
 @inject BinService BinsService
-@inject SessionState Session
 @inject ToastService Toast
 
 <div class="card form">
@@ -31,24 +32,32 @@
     public enum OpMode { Receive, Ship, Transfer, WriteOff }
 
     [Parameter] public OpMode Mode { get; set; }
+    [CascadingParameter(Name = "CurrentUser")] public SessionUser? User { get; set; }
 
     string? barcode, fromBin, toBin, reason;
     int quantity = 1;
     bool busy;
     List<BinView> bins = new();
 
-    protected override async Task OnInitializedAsync() => bins = await BinsService.ListAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        State.OnChange += Changed;     // bin list stays current when bins are added elsewhere
+        bins = await BinsService.ListAsync();
+    }
+
+    void Changed() => InvokeAsync(async () => { bins = await BinsService.ListAsync(); StateHasChanged(); });
+    public void Dispose() => State.OnChange -= Changed;
 
     async Task Submit()
     {
+        if (User is null) return;
         busy = true;
-        var user = Session.Current!;
         var result = Mode switch
         {
-            OpMode.Receive => await Inventory.ReceiveAsync(user, barcode, quantity),
-            OpMode.Ship => await Inventory.ShipAsync(user, barcode, quantity),
-            OpMode.Transfer => await Inventory.TransferAsync(user, barcode, fromBin, toBin, quantity),
-            _ => await Inventory.WriteOffAsync(user, barcode, fromBin, quantity, reason)
+            OpMode.Receive => await Inventory.ReceiveAsync(User, barcode, quantity),
+            OpMode.Ship => await Inventory.ShipAsync(User, barcode, quantity),
+            OpMode.Transfer => await Inventory.TransferAsync(User, barcode, fromBin, toBin, quantity),
+            _ => await Inventory.WriteOffAsync(User, barcode, fromBin, quantity, reason)
         };
         Toast.Show(result.IsOk ? result.Unwrap() : result.Message, !result.IsOk);
         if (result.IsOk) { barcode = null; quantity = 1; reason = null; }

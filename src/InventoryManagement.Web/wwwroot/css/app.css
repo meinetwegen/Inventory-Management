@@ -45,3 +45,22 @@ th { background: #f9fafb; font-size: .85rem; }
 .toast { padding: .75rem 1rem; border-radius: 8px; color: #fff; cursor: pointer; max-width: 340px; }
 .toast.good { background: #059669; } .toast.bad { background: var(--danger); }
 
+.section { padding: 0; overflow: hidden; }
+.section-head { width: 100%; display: flex; align-items: center; gap: .75rem; background: none; border: 0; padding: .75rem 1rem; font-size: 1.1rem; font-weight: 600; cursor: pointer; min-height: 44px; text-align: left; color: var(--text); }
+.section-head:hover { background: #f9fafb; }
+.plus { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.section-body { padding: 0 1rem 1rem; }
+
+/* tablet */
+@media (max-width: 900px) { .nav { width: 170px; } main { padding: 1rem; } }
+/* phone: menu on top, tables become cards */
+@media (max-width: 600px) {
+  .app { flex-direction: column; }
+  .nav { width: 100%; }
+  .nav .links { flex-direction: row; flex-wrap: wrap; }
+  table, thead, tbody, tr, th, td { display: block; }
+  thead { display: none; }
+  tr { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: .75rem; padding: .5rem; }
+  td { border: 0; display: flex; justify-content: space-between; padding: .3rem .5rem; }
+  td::before { content: attr(data-label); font-weight: 600; color: var(--muted); }
+}

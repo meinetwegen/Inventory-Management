@@ -1,0 +1,45 @@
+@implements IDisposable
+@inject BinService BinsService
+@inject InventoryState State
+@inject ToastService Toast
+
+@if (User is not null && Permissions.CanManageCatalog(User.Role))
+{
+    <div class="card form">
+        <FormField Label="Code"><input @bind="code" placeholder="A-03" /></FormField>
+        <FormField Label="Capacity"><input type="number" min="1" @bind="capacity" /></FormField>
+        <button class="btn" @onclick="AddAsync">Add bin</button>
+    </div>
+}
+<DataTable Items="bins">
+    <HeaderTemplate><th>Code</th><th>Used / Capacity</th><th>Fill</th></HeaderTemplate>
+    <RowTemplate Context="b">
+        <td data-label="Code">@b.Code</td>
+        <td data-label="Used">@b.Occupied / @b.Capacity</td>
+        <td data-label="Fill"><div class="bar"><div class="bar-fill" style="width:@(b.Percent)%"></div></div> @b.Percent%</td>
+    </RowTemplate>
+</DataTable>
+
+@code {
+    [CascadingParameter(Name = "CurrentUser")] public SessionUser? User { get; set; }
+
+    List<BinView> bins = new();
+    string? code;
+    int capacity = 50;
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.OnChange += Changed;
+        bins = await BinsService.ListAsync();
+    }
+
+    async Task AddAsync()
+    {
+        var r = await BinsService.CreateAsync(User!, code, capacity);
+        Toast.Show(r.IsOk ? $"Bin {r.Unwrap().Code} added" : r.Message, !r.IsOk);
+        if (r.IsOk) { code = null; await State.RefreshAsync(); }   // tells the other panels to reload
+    }
+
+    void Changed() => InvokeAsync(async () => { bins = await BinsService.ListAsync(); StateHasChanged(); });
+    public void Dispose() => State.OnChange -= Changed;
+}

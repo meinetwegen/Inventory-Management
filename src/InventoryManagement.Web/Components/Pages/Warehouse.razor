@@ -1,0 +1,16 @@
+@page "/warehouse"
+
+<PageTitle>Warehouse</PageTitle>
+<RoleGuard>
+    <h1>Warehouse</h1>
+    <p class="muted">Click + to open a section. Sections load their data only when opened.</p>
+
+    <CollapsibleSection Title="Operations" @bind-Expanded="openOps"><OperationsPanel /></CollapsibleSection>
+    <CollapsibleSection Title="Stock" @bind-Expanded="openStock"><StockPanel /></CollapsibleSection>
+    <CollapsibleSection Title="Products" @bind-Expanded="openProducts"><ProductsPanel /></CollapsibleSection>
+    <CollapsibleSection Title="Bins" @bind-Expanded="openBins"><BinsPanel /></CollapsibleSection>
+</RoleGuard>
+
+@code {
+    bool openOps = true, openStock = true, openProducts, openBins;
+}

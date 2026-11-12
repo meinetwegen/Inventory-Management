@@ -1,0 +1,88 @@
+@inject ProductService ProductsService
+@inject InventoryState State
+@inject ToastService Toast
+
+<div class="toolbar">
+    <input aria-label="Search" placeholder="Search name, SKU, barcode" @bind="search" @bind:event="oninput" @bind:after="SearchAsync" />
+    @if (canEdit) { <button class="btn" @onclick="() => Edit(new Product())">+ Add product</button> }
+</div>
+
+@if (editing is not null)
+{
+    <div class="card form">
+        <FormField Label="SKU"><input @bind="editing.Sku" /></FormField>
+        <FormField Label="Barcode (8-14 digits)"><input @bind="editing.Barcode" /></FormField>
+        <FormField Label="Name"><input @bind="editing.Name" /></FormField>
+        <FormField Label="Minimum stock level"><input type="number" @bind="editing.MinStockLevel" /></FormField>
+        @if (error != "") { <p class="error" role="alert">@error</p> }
+        <div class="row">
+            <button class="btn" @onclick="SaveAsync">Save</button>
+            <button class="btn secondary" @onclick="() => editing = null">Cancel</button>
+        </div>
+    </div>
+}
+
+<DataTable Items="items">
+    <HeaderTemplate><th>SKU</th><th>Barcode</th><th>Name</th><th>Min</th><th>Status</th><th></th></HeaderTemplate>
+    <RowTemplate Context="p">
+        <td data-label="SKU">@p.Sku</td>
+        <td data-label="Barcode">@p.Barcode</td>
+        <td data-label="Name">@p.Name</td>
+        <td data-label="Min">@p.MinStockLevel</td>
+        <td data-label="Status">@(p.IsActive ? "Active" : "Disabled")</td>
+        <td>
+            @if (canEdit && p.IsActive)
+            {
+                <button class="btn secondary" @onclick="() => Edit(p)">Edit</button>
+                <button class="btn danger" @onclick="() => toDisable = p">Disable</button>
+            }
+        </td>
+    </RowTemplate>
+    <EmptyTemplate><p class="muted">No products found.</p></EmptyTemplate>
+</DataTable>
+<Pagination Page="page" PageSize="PageSize" TotalCount="total" PageChanged="GoToAsync" />
+
+<ConfirmModal Visible="toDisable is not null" Title="Disable product"
+              Message="@DisableMessage"
+              OnConfirm="DisableAsync" OnCancel="() => toDisable = null" />
+
+@code {
+    [CascadingParameter(Name = "CurrentUser")] public SessionUser? User { get; set; }
+
+    const int PageSize = 10;
+    string DisableMessage => $"Disable {toDisable?.Name}? Its history is kept.";
+    List<Product> items = new();
+    int page = 1, total;
+    string? search;
+    string error = "";
+    Product? editing, toDisable;
+    bool canEdit => User is not null && Permissions.CanManageCatalog(User.Role);
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    async Task LoadAsync() => (items, total) = await ProductsService.ListAsync(search, page, PageSize);
+    async Task SearchAsync() { page = 1; await LoadAsync(); }
+    async Task GoToAsync(int p) { page = p; await LoadAsync(); }
+
+    void Edit(Product p) { error = ""; editing = new Product { Id = p.Id, Sku = p.Sku, Barcode = p.Barcode, Name = p.Name, MinStockLevel = p.MinStockLevel }; }
+
+    async Task SaveAsync()
+    {
+        var e = editing!;
+        var r = await ProductsService.SaveAsync(User!, e.Id == 0 ? null : e.Id, e.Sku, e.Barcode, e.Name, e.MinStockLevel);
+        if (!r.IsOk) { error = r.Message; return; }
+        Toast.Show("Product saved");
+        editing = null; error = "";
+        await LoadAsync();
+        await State.RefreshAsync();
+    }
+
+    async Task DisableAsync()
+    {
+        var r = await ProductsService.DisableAsync(User!, toDisable!.Id);
+        Toast.Show(r.IsOk ? "Product disabled" : r.Message, !r.IsOk);
+        toDisable = null;
+        await LoadAsync();
+        await State.RefreshAsync();
+    }
+}
