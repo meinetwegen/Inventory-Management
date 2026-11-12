@@ -6,7 +6,6 @@ namespace InventoryManagement.Web.Services;
 
 public record Summary(int Products, int Units, int BinsUsed, int BinCount, int LowStockCount);
 
-// State container for the dashboard; refreshed after every stock operation.
 public class InventoryState(IDbContextFactory<AppDbContext> factory)
 {
     public Summary? Current { get; private set; }

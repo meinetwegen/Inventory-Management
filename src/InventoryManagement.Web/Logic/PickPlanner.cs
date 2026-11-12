@@ -5,8 +5,7 @@ public record Pick(int BinId, string Code, int Quantity);
 
 public static class PickPlanner
 {
-    // Take from the smallest stocks first so bins get emptied.
-    public static Result<List<Pick>> Plan(IEnumerable<BinStock> bins, int quantity)
+        public static Result<List<Pick>> Plan(IEnumerable<BinStock> bins, int quantity)
     {
         if (quantity <= 0) return Result.Fail<List<Pick>>("Quantity must be greater than 0");
         var list = bins.Where(b => b.Quantity > 0).OrderBy(b => b.Quantity).ToList();

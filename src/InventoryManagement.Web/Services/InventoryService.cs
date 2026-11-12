@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InventoryManagement.Web.Services;
 
-// Every operation changes stock AND writes a transaction in ONE SaveChangesAsync (all or nothing).
 public partial class InventoryService(
     IDbContextFactory<AppDbContext> factory, InventoryState state, ILogger<InventoryService> log)
 {

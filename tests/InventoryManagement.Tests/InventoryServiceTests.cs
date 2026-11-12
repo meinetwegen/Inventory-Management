@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace InventoryManagement.Tests;
 
-// Real SQLite in memory, so constraints and transactions behave like in production.
 class TestFactory : IDbContextFactory<AppDbContext>, IDisposable
 {
     readonly SqliteConnection _conn = new("DataSource=:memory:");
@@ -96,8 +95,8 @@ public class InventoryServiceTests
     public async Task Transfer_OverCapacity_Fails()
     {
         var (svc, _) = Create();
-        await svc.ReceiveAsync(Admin, "12345678", 50);           // too big for B (20), goes to A (100)
-        var r = await svc.TransferAsync(Admin, "12345678", "A", "B", 30); // B has capacity 20
+        await svc.ReceiveAsync(Admin, "12345678", 50);
+        var r = await svc.TransferAsync(Admin, "12345678", "A", "B", 30);
         Assert.False(r.IsOk);
     }
 
@@ -121,7 +120,7 @@ public class InventoryServiceTests
     public async Task FullScenario_Receive_Transfer_Ship_History()
     {
         var (svc, f) = Create();
-        Assert.True((await svc.ReceiveAsync(Admin, "12345678", 20)).IsOk);   // smallest empty bin that fits: B
+        Assert.True((await svc.ReceiveAsync(Admin, "12345678", 20)).IsOk);
         Assert.True((await svc.TransferAsync(Admin, "12345678", "B", "A", 10)).IsOk);
         Assert.True((await svc.ShipAsync(Admin, "12345678", 15)).IsOk);
 
@@ -129,7 +128,7 @@ public class InventoryServiceTests
         Assert.Equal(5, scan.Total);
 
         var (history, total) = await svc.ListTransactionsAsync(null, 1, 10);
-        Assert.Equal(4, total); // inbound, transfer, 2 x outbound (two bins)
+        Assert.Equal(4, total);
         Assert.Contains(history, h => h.Type == TxType.Outbound);
     }
 
@@ -138,9 +137,6 @@ public class InventoryServiceTests
     {
         var (svc, f) = Create();
         await svc.ReceiveAsync(Admin, "12345678", 10);
-
-        // Simulate another user: bump the version between load and save.
-        // We do it by running two receives on stale data using two contexts directly.
         using var db1 = f.CreateDbContext();
         using var db2 = f.CreateDbContext();
         var a = db1.StockItems.First(); var b = db2.StockItems.First();

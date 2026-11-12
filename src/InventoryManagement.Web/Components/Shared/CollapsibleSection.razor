@@ -14,7 +14,5 @@
     [Parameter] public bool Expanded { get; set; }
     [Parameter] public EventCallback<bool> ExpandedChanged { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
-
-    // Content is rendered only while open, so a panel loads its data on first open (lazy loading).
     Task Toggle() => ExpandedChanged.InvokeAsync(!Expanded);
 }

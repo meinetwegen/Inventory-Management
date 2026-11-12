@@ -2,13 +2,11 @@ namespace InventoryManagement.Web.Logic;
 
 public record BinFillRow(string Code, int Occupied, int Capacity);
 
-// Pure functions: report data in, CSV text out.
 public static class CsvExport
 {
     public static string Escape(string? value)
     {
         var s = value ?? "";
-        // cells starting with these characters can be run as formulas by Excel
         if (s.Length > 0 && "=+-@".Contains(s[0])) s = "'" + s;
         return s.IndexOfAny(new[] { ',', '"', '\n', '\r' }) >= 0
             ? "\"" + s.Replace("\"", "\"\"") + "\""

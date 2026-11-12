@@ -7,8 +7,6 @@ public class ToastService
     readonly object _lock = new();
     readonly List<Toast> _items = new();
     public event Action? OnChange;
-
-    // snapshot copy: the auto-dismiss timer runs on another thread
     public IReadOnlyList<Toast> Items { get { lock (_lock) return _items.ToList(); } }
 
     public void Show(string message, bool isError = false)
