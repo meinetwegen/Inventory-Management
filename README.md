@@ -142,8 +142,6 @@ Then sign out and sign in as the operator to see what is hidden: no Reports link
 | Receive, ship, transfer, scan | Yes | Yes | Yes |
 | View stock, products, bins, history, dashboard | Yes | Yes | Yes |
 
-Permissions are defined in one place (`Logic/Permissions.cs`) and checked three times: the menu hides links, pages guard their content with `RoleGuard`, and every service checks the role again.
-
 ## How the business rules work
 
 ### Receiving (bin assignment)
