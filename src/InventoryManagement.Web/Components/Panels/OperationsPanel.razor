@@ -3,13 +3,29 @@
     {
         @if (m != StockOperationForm.OpMode.WriteOff || (User is not null && Permissions.CanWriteOff(User.Role)))
         {
-            <button class="tab @(m == mode ? "active" : "")" role="tab" @onclick="() => mode = m">@m</button>
+            <button class="tab @(!scan && m == mode ? "active" : "")" role="tab" @onclick="() => Select(m)">@m</button>
         }
     }
+    <button class="tab @(scan ? "active" : "")" role="tab" @onclick="() => scan = true">Scan</button>
 </div>
-<StockOperationForm Mode="mode" @key="mode" />
+
+@if (scan)
+{
+    <ScanPanel />
+}
+else
+{
+    <StockOperationForm Mode="mode" @key="mode" />
+}
 
 @code {
     [CascadingParameter(Name = "CurrentUser")] public SessionUser? User { get; set; }
     StockOperationForm.OpMode mode = StockOperationForm.OpMode.Receive;
+    bool scan;
+
+    void Select(StockOperationForm.OpMode m)
+    {
+        mode = m;
+        scan = false;
+    }
 }
