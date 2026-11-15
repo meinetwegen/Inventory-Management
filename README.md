@@ -240,13 +240,24 @@ dotnet test
 dotnet test --collect:"XPlat Code Coverage"
 ```
 
-The solution contains 61 automated tests. Run the command for the exact number.
+The solution contains 87 automated tests: 85 unit, integration and component tests plus 2 end-to-end tests.
 
 | Group | What it checks |
 |---|---|
 | Logic | `Result<T>`, product validation, bin assignment, pick planning, transfer and write-off rules, permissions, reports, CSV export |
 | Services | Receive, ship, transfer, write-off and a full scenario against a real SQLite database in memory, including the shortage and no-space cases |
 | Components | StatCard, DataTable, Pagination and CollapsibleSection with bUnit |
+| End to end | Playwright drives a real browser against the running app: sign in, receive goods, see the stock (separate project `tests/InventoryManagement.E2E`) |
+
+The end-to-end project is not part of the normal `dotnet test` run, because it needs a browser. Run it once after installing the browser:
+
+```
+dotnet build tests/InventoryManagement.E2E
+pwsh tests/InventoryManagement.E2E/bin/Debug/net8.0/playwright.ps1 install chromium
+dotnet test tests/InventoryManagement.E2E
+```
+
+The test starts the application itself on port 5199 with an empty temporary database, so nothing else needs to be running. To watch the browser while the test runs, set `E2E_HEADED=1` first (PowerShell: `$env:E2E_HEADED = "1"`). A screenshot of the result is saved in `tests/InventoryManagement.E2E/bin/Debug/net8.0/screenshots/`.
 
 
 ## Troubleshooting
@@ -269,14 +280,14 @@ The solution contains 61 automated tests. Run the command for the exact number.
 - SQLite is a single-file database. It is fine for a demo and a small team; PostgreSQL would be the choice for production.
 - The database is created with `EnsureCreated`; there are no migrations yet.
 - Dashboard state is per browser session, not shared between users in real time.
-- No browser end-to-end tests.
+- The browser end-to-end tests cover one main flow only (sign in, receive, check stock).
 
 ## Roadmap
 
 - Cookie authentication and a user management page.
 - Live updates of the low-stock list with SignalR.
 - PostgreSQL and EF Core migrations.
-- Browser end-to-end tests, for example with Playwright.
+- More browser end-to-end scenarios (ship, transfer, roles).
 - Purchase and sales documents, batch numbers and expiry dates.
 
 ## Development workflow
@@ -304,6 +315,6 @@ All code, tests and documentation in this repository were written by the team. W
 
 The functional programming patterns (`Result<T>` with `Bind` and `Map`, pure functions, LINQ) come from the course assignments.
 
-Team: Alexandra Koziy and Zhannel Malikajdar. Course project; no open-source license has been chosen.
+Team: Alexandra Koziy and Zhannel Malikaidar. Course project; no open-source license has been chosen.
 
 https://github.com/meinetwegen/Inventory-Management
