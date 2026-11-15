@@ -4,7 +4,7 @@ A warehouse web application for small teams: know what you have, where it is sto
 
 The application tracks products and storage bins, places incoming goods automatically, plans shipments, moves and writes off stock, looks up items by barcode, keeps a full history of every operation, and produces reports that can be downloaded as CSV. Access is controlled by three roles.
 
-It was built by team of 2 students for the course Introduction to Functional Programming (C# / .NET), using Blazor Server, Entity Framework Core and SQLite.
+It was built by a team of 2 students for the course Introduction to Functional Programming (C# / .NET), using Blazor Server, Entity Framework Core and SQLite.
 
 ## Contents
 
@@ -240,7 +240,7 @@ dotnet test
 dotnet test --collect:"XPlat Code Coverage"
 ```
 
-The solution contains about 60 automated tests. Run the command for the exact number.
+The solution contains 61 automated tests. Run the command for the exact number.
 
 | Group | What it checks |
 |---|---|
@@ -248,7 +248,6 @@ The solution contains about 60 automated tests. Run the command for the exact nu
 | Services | Receive, ship, transfer, write-off and a full scenario against a real SQLite database in memory, including the shortage and no-space cases |
 | Components | StatCard, DataTable, Pagination and CollapsibleSection with bUnit |
 
-There is no browser end-to-end test. The manual checklist in `docs/qa-checklist.md` covers every role, each operation with valid and invalid input, paging, the phone layout and several browsers.
 
 ## Troubleshooting
 
@@ -265,7 +264,7 @@ There is no browser end-to-end test. The manual checklist in `docs/qa-checklist.
 
 ## Known limitations
 
-- The sign-in is kept in memory for the browser tab. Refreshing the page signs you out. Cookie-based authentication is the planned fix.
+- Sign-in is kept in memory; refresh signs you out. Planned: ProtectedSessionStorage, later cookie authentication
 - Users cannot be managed in the interface; accounts come from the seeder.
 - SQLite is a single-file database. It is fine for a demo and a small team; PostgreSQL would be the choice for production.
 - The database is created with `EnsureCreated`; there are no migrations yet.
@@ -293,10 +292,7 @@ There is no browser end-to-end test. The manual checklist in `docs/qa-checklist.
 |---|---|
 | `docs/architecture.md` | Layers, key decisions, entity diagram, algorithms |
 | `docs/user-guide.md` | How to use each screen |
-| `docs/qa-checklist.md` | Manual test checklist |
 | `docs/testing.md` | Test groups, commands, results |
-| `docs/criteria.md` | How the project covers the 20 evaluation criteria |
-| `COMMITS.md` | Commit plan for the two students |
 
 ## Sources and credits
 
@@ -309,3 +305,5 @@ All code, tests and documentation in this repository were written by the team. W
 The functional programming patterns (`Result<T>` with `Bind` and `Map`, pure functions, LINQ) come from the course assignments.
 
 Team: Alexandra Koziy and Zhannel Malikajdar. Course project; no open-source license has been chosen.
+
+https://github.com/meinetwegen/Inventory-Management
