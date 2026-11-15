@@ -36,7 +36,8 @@ public class AppFixture : IAsyncLifetime
         await WaitUntilReadyAsync();
 
         Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
-        Browser = await Playwright.Chromium.LaunchAsync(new() { Headless = true });
+        var headed = Environment.GetEnvironmentVariable("E2E_HEADED") == "1";
+        Browser = await Playwright.Chromium.LaunchAsync(new() { Headless = !headed, SlowMo = headed ? 600 : 0 });
     }
 
     public async Task DisposeAsync()
@@ -63,7 +64,7 @@ public class AppFixture : IAsyncLifetime
             catch (HttpRequestException) { /* not listening yet */ }
             await Task.Delay(1000);
         }
-        throw new TimeoutException("The web app did not start in time.");
+        throw new System.TimeoutException("The web app did not start in time.");
     }
 
     static string FindSolutionRoot()
