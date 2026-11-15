@@ -304,6 +304,6 @@ All code, tests and documentation in this repository were written by the team. W
 
 The functional programming patterns (`Result<T>` with `Bind` and `Map`, pure functions, LINQ) come from the course assignments.
 
-Team: Alexandra Koziy and Zhannel Malikajdar. Course project; no open-source license has been chosen.
+Team: Alexandra Koziy and Zhannel Malikaidar. Course project; no open-source license has been chosen.
 
 https://github.com/meinetwegen/Inventory-Management
