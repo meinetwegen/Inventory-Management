@@ -240,7 +240,7 @@ dotnet test
 dotnet test --collect:"XPlat Code Coverage"
 ```
 
-The solution contains 87 automated tests: 85 unit, integration and component tests plus 2 end-to-end tests.
+The solution contains 85 cases plus 2 end-to-end tests.
 
 | Group | What it checks |
 |---|---|

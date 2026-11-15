@@ -3,8 +3,6 @@ using Microsoft.Playwright;
 
 namespace InventoryManagement.E2E;
 
-// Starts the real web app on a free port with an empty temporary SQLite database,
-// and opens a Chromium browser. One instance is shared by all tests in the collection.
 public class AppFixture : IAsyncLifetime
 {
     const string Url = "http://127.0.0.1:5199";
@@ -30,7 +28,6 @@ public class AppFixture : IAsyncLifetime
         psi.Environment["ConnectionStrings__Default"] = $"Data Source={dbFile}";
         psi.Environment["SEED_DEMO"] = "false";
         app = Process.Start(psi)!;
-        // drain output so the child process never blocks on a full pipe
         app.OutputDataReceived += (_, _) => { };
         app.ErrorDataReceived += (_, _) => { };
         app.BeginOutputReadLine();
@@ -39,9 +36,7 @@ public class AppFixture : IAsyncLifetime
         await WaitUntilReadyAsync();
 
         Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
-        // E2E_HEADED=1 shows the browser window and slows the steps down, so the test can be watched
-        var headed = Environment.GetEnvironmentVariable("E2E_HEADED") == "1";
-        Browser = await Playwright.Chromium.LaunchAsync(new() { Headless = !headed, SlowMo = headed ? 600 : 0 });
+        Browser = await Playwright.Chromium.LaunchAsync(new() { Headless = true });
     }
 
     public async Task DisposeAsync()
@@ -56,7 +51,7 @@ public class AppFixture : IAsyncLifetime
     async Task WaitUntilReadyAsync()
     {
         using var http = new HttpClient();
-        var deadline = DateTime.UtcNow.AddSeconds(150);   // first run also compiles the app
+        var deadline = DateTime.UtcNow.AddSeconds(150);
         while (DateTime.UtcNow < deadline)
         {
             if (app!.HasExited) throw new InvalidOperationException("The web app exited during start-up.");
@@ -68,7 +63,7 @@ public class AppFixture : IAsyncLifetime
             catch (HttpRequestException) { /* not listening yet */ }
             await Task.Delay(1000);
         }
-        throw new System.TimeoutException("The web app did not start in time.");
+        throw new TimeoutException("The web app did not start in time.");
     }
 
     static string FindSolutionRoot()
